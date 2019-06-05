@@ -267,25 +267,32 @@ public class PamapMain extends PamapOptions {
     	 
     	 int temp2 = model.numCorrect;
     	 /*
-    	List<Prediction> temp = model.getPredictions();
+    	    List<Prediction> temp = model.getPredictions();
     	
-    	int[][] tempHoeff = new int[dataHandler2.getNumClasses()][dataHandler2.getNumClasses()];
-    	int[][] tempNaive = new int[dataHandler2.getNumClasses()][dataHandler2.getNumClasses()];
+    	    int[][] tempHoeff = new int[dataHandler2.getNumClasses()][dataHandler2.getNumClasses()];
+    	    int[][] tempNaive = new int[dataHandler2.getNumClasses()][dataHandler2.getNumClasses()];
     	
-    	for(int i = 0; i < model.getPredictions().size();i++) {
-    		int real = model.getPredictions().get(i).getReal();
+    	    for(int i = 0; i < model.getPredictions().size();i++) {
+    		    int real = model.getPredictions().get(i).getReal();
     		
-    		for(int k = 0; k < model.getclassifierID().size();k++) {
-    			if(model.getclassifierID().get(k) == 1) {
-    			tempNaive[real][model.getPredictions().get(i).getPredictedPerClassifier().get(k)] += 1;
+    		    for(int k = 0; k < model.getclassifierID().size();k++) {
+    			    if(model.getclassifierID().get(k) == 1) {
+    			    tempNaive[real][model.getPredictions().get(i).getPredictedPerClassifier().get(k)] += 1;
     			
-    			}else if (model.getclassifierID().get(k) == 2)
-    			tempHoeff[real][model.getPredictions().get(i).getPredictedPerClassifier().get(k)] += 1;
-    		} 	
-    	} 
+    			    }else if (model.getclassifierID().get(k) == 2)
+    			    tempHoeff[real][model.getPredictions().get(i).getPredictedPerClassifier().get(k)] += 1;
+    		    } 	
+    	    } 
     	*/
     	
 	}
+	
+	public static void testMultiTree(MyTreeNode<String> IterationNode) {
+	    
+	    
+	    return null;
+	}
+	
 
 	private static String[] getElemInit(double[][] distHoeff) {
  	   String[] act = new String[distHoeff.length];

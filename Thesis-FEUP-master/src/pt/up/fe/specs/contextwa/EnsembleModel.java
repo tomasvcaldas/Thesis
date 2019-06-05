@@ -17,6 +17,7 @@ import static java.lang.Math.toIntExact;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +27,7 @@ import com.xkynar.harossl.classifier.HarosslMajorityClassifier;
 import com.xkynar.harossl.data.PamapDataFetcher;
 import com.xkynar.harossl.data.PamapDataHandler;
 import com.xkynar.harossl.util.ProgressBarString;
+import com.xkynar.harossl.util.PruningMethods;
 import com.yahoo.labs.samoa.instances.Attribute;
 import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
@@ -70,10 +72,21 @@ public class EnsembleModel {
     public int NumeroInstanciasNotEvaluated = 0;
     public ArrayList<Integer> accuracy = new ArrayList<Integer>();
     public ArrayList<Integer> NumberOfInstances = new ArrayList<Integer>();
+    
     public static Map<String, Integer> leafCorrectValues = new HashMap<String, Integer>();
     public static Map<String, Integer> leafNumberOfValues = new HashMap<String, Integer>();
+    public static Map<String, Integer> nodesCount = new HashMap<String, Integer>();
+    public static Map<String, Integer> nodesGuessCount = new HashMap<String, Integer>();
+    public static Map<String, Integer> nodesWrong = new HashMap<String, Integer>();
     
-
+    public static Map<String, int[]> confusionMatrixes = new HashMap<String, int[]>();
+    
+    public static Map<String, int[]> finalConfusionMatrixes = new HashMap<String, int[]>();
+    
+    public PruningMethods pruningMethods = new PruningMethods();
+    
+    
+    public EnsembleModel() {};
     public EnsembleModel(SSLClassifier classifier, DataHandler dataHandler,
             DataFetcher trainDataFetcher,
             DataFetcher testDataFetcher) {
@@ -207,26 +220,63 @@ public class EnsembleModel {
 	        testTreeIteration(root.getChildren().get(1),ChildNode2,Sensors);
 	        else
 	        sumCorrectInstances(ChildNode2);
-
+	        
+	        updateFinalTrueNegatives(NumeroInstancias);
+	        
 	        if (printBar) {
 	            ProgressBarString.printFullBar();
 	        }
 	        
 	        testDataFetcher.close();
 	        
-	        System.out.println("Instances values: ");
+	        System.out.println("Confusion Matrixes Starting Accuracy: ");
+            Iterator<Map.Entry <String, int[]> > it = confusionMatrixes.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<String, int[]> pair = it.next();
+                double accuracy = (double)(pair.getValue()[0] + pair.getValue()[3] )/(pair.getValue()[0] + pair.getValue()[1] + pair.getValue()[2] + pair.getValue()[3]);
+                System.out.println(pair.getKey() +": " +  accuracy );
+            }
 	        
-	        for (String key : leafNumberOfValues.keySet()) {
-	           // System.out.println(key + ": total -> " + leafNumberOfValues.get(key) + " | real -> " + leafCorrectValues.getOrDefault(key, 0));
-	            double correctInstancePercentage = leafCorrectValues.getOrDefault(key, 0) / leafNumberOfValues.get(key);
-	            System.out.println(key + " : " + correctInstancePercentage );
-	        }
-	        
+	        System.out.println("Final Confusion Matrixes Accuracy: ");
+            Iterator<Map.Entry <String, int[]> > it2 = finalConfusionMatrixes.entrySet().iterator();
+            while (it2.hasNext()) {
+                Map.Entry<String, int[]> pair = it2.next();
+                double accuracy = (double)( pair.getValue()[0] + pair.getValue()[3] ) / (pair.getValue()[0] + pair.getValue()[1] + pair.getValue()[2] + pair.getValue()[3]);
+                System.out.println(pair.getKey() +": " +  accuracy );
+            }
             
+           /* System.out.println("Nodes count: ");
+            Iterator<Map.Entry <String, Integer> > it3 = nodesCount.entrySet().iterator();
+            while (it3.hasNext()) {
+                Map.Entry<String, Integer> pair = it3.next();
+                System.out.println(pair.getKey() +": " +  pair.getValue() );
+            }
+            
+            System.out.println("Nodes guess count: ");
+            Iterator<Map.Entry <String, Integer> > it4 = nodesGuessCount.entrySet().iterator();
+            while (it4.hasNext()) {
+                Map.Entry<String, Integer> pair = it4.next();
+                System.out.println(pair.getKey() +": " +  pair.getValue() );
+            }*/
+             
+           MyTreeNode<String> nodeToPrun = pruningMethods.getNodeToPrune(root);
+           
+           MyTreeNode<String> prunnedNode = pruningMethods.pruneNode(nodeToPrun);
+           
+ 
+         
+            
+            
+            
+            
+	         
+	        System.out.println("ACABOU");
 	        
-	        
-	        
-	        
+	        /*for (String key : leafNumberOfValues.keySet()) {
+	            System.out.println(key + ": total -> " + leafNumberOfValues.get(key) + " | real -> " + leafCorrectValues.getOrDefault(key, 0));
+	            //double correctInstancePercentage = leafCorrectValues.getOrDefault(key, 0) / leafNumberOfValues.get(key);
+	            //System.out.println(key + " : " + correctInstancePercentage );
+	        }*/
 		
 	}
 	
@@ -250,6 +300,7 @@ public class EnsembleModel {
 		for(int i = 0;i <ListaInstancias.size(); i++) {
 			double temp = ListaInstancias.get(i).getInstance().value(0);
 			String temp2 = dataHandler.getClassification((int) temp);
+			createFinalConfusionMatrixes(ListaInstancias.get(i).getRealClass(), temp2);
 			if(ListaInstancias.get(i).getRealClass().equals(temp2)) {
 				numCorrect++;
 				acc++;
@@ -267,6 +318,7 @@ public class EnsembleModel {
 		for(int i = 0;i <ListaInstancias.size(); i++) {
 			double temp = ListaInstancias.get(i).getInstance().value(0);
 			String temp2 = model.dataHandler.getClassification((int) temp);
+			createFinalConfusionMatrixes(ListaInstancias.get(i).getRealClass(), temp2);
 			if(ListaInstancias.get(i).getRealClass().equals(temp2)) {
 				numCorrect++;
 				acc++;
@@ -316,7 +368,7 @@ public class EnsembleModel {
 		
 	}
 	
-	public void updateLeafCorrectValue(String instance) {
+	/*public void updateLeafCorrectValue(String instance) {
 	    if(leafCorrectValues.containsKey(instance) ) {
 	        leafCorrectValues.put(instance, leafCorrectValues.get(instance)+1);
 	    } else {
@@ -330,7 +382,31 @@ public class EnsembleModel {
         } else {
             leafNumberOfValues.put(instance, 1);
         }
+	}*/
+	
+	public void updateCorrectNodeCount(String node) {
+	    if(nodesCount.containsKey(node) ) {
+	        nodesCount.put(node, nodesCount.get(node)+1);
+        } else {
+            nodesCount.put(node, 1);
+        }
 	}
+	
+	public void updateGuessedNodeCount(String node) {
+        if(nodesGuessCount.containsKey(node) ) {
+            nodesGuessCount.put(node, nodesGuessCount.get(node)+1);
+        } else {
+            nodesGuessCount.put(node, 1);
+        }
+    }
+	
+	public void updateWrongNodes(String node) {
+        if(nodesWrong.containsKey(node) ) {
+            nodesWrong.put(node, nodesWrong.get(node)+1);
+        } else {
+            nodesWrong.put(node, 1);
+        }
+    }
 
 	private void test(List<InstanceModified> childNode12, EnsembleModel model, List<InstanceModified> Path1, List<InstanceModified> Path2)
 	{
@@ -352,6 +428,19 @@ public class EnsembleModel {
 	        //int realClassValue = getClassValue(instance);
 	        String givenClass = model.dataHandler.getClassification(classificationIndex); // classifier opinion
 	        String realClass = instance.getRealClass();
+	        
+	        /*if (model.dataHandler.getClassification(0).contains(realClass)) {
+	            updateCorrectNodeCount(model.dataHandler.getClassification(0));
+	        } else if (model.dataHandler.getClassification(1).contains(realClass)) {
+	            updateCorrectNodeCount(model.dataHandler.getClassification(1));
+	        } 
+	        
+	        if(classificationIndex == 0) {
+	            updateGuessedNodeCount(model.dataHandler.getClassification(0));
+	        } else if (classificationIndex == 1) {
+	            updateGuessedNodeCount(model.dataHandler.getClassification(1));
+	        }*/
+	        
 	        List<String> newClasses = new ArrayList<String>();
 	        newClasses.add(model.dataHandler.getClassification(0));
 	        newClasses.add(model.dataHandler.getClassification(1));
@@ -461,11 +550,22 @@ public class EnsembleModel {
     	//Onde passa um 
     	int classificationIndex = classifier.classifyTree(instance,root);
     	
+    	if(root.getChildren().get(0).getData().toString().contains(RealClass)) {
+    	    updateCorrectNodeCount(root.getChildren().get(0).getData().toString());
+    	} else if (root.getChildren().get(1).getData().toString().contains(RealClass)) {
+    	    updateCorrectNodeCount(root.getChildren().get(1).getData().toString());
+    	} else {
+    	    updateWrongNodes(root.getData().toString());
+    	}
+    	
+    	
     	if(classificationIndex == 0) {
+    	    updateGuessedNodeCount(root.getChildren().get(0).getData().toString());
     		InstanceModified temp = new InstanceModified(instance,RealClass);
     		ChildNode1.add(temp);
-    	}
+    	}  
     	else {
+    	    updateGuessedNodeCount(root.getChildren().get(1).getData().toString());
     		InstanceModified temp = new InstanceModified(instance,RealClass);
     		ChildNode2.add(temp);
     	}
@@ -488,7 +588,9 @@ public class EnsembleModel {
 		
 	}
     
-    private boolean IsLeaf(MyTreeNode<String> IteratingNode) {
+    
+    
+    public boolean IsLeaf(MyTreeNode<String> IteratingNode) {
     	if(IteratingNode.getData().equals("Root"))
     		return false;
     	
@@ -640,6 +742,143 @@ public class EnsembleModel {
             throw new NullPointerException("The test data fetcher must be defined");
         }
     }
+    
+    public void createConfusionMatrixes(String real, String predicted) {
+        
+        if(real == predicted) {
+            addTruePositiveToConfusionMatrix(predicted);
+        } else if (real != predicted ) {
+            addFalsePositiveToConfusionMatrix(predicted);
+            addFalseNegativeToConfusionMatrix(real);
+        }
+        
+    }
+    
+    public void updateTrueNegatives(int size) {
+        Iterator<Map.Entry <String, int[]> > it = confusionMatrixes.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, int[]> pair = it.next();
+            int trueNegatives = pair.getValue()[0] + pair.getValue()[1] + pair.getValue()[2];
+            pair.getValue()[3] = size - trueNegatives;
+            pair.setValue(pair.getValue());
+        }
+        
+        
+    }
+    
+    public void addTruePositiveToConfusionMatrix(String activity) {
+        
+        if(confusionMatrixes.containsKey(activity) ) {
+            confusionMatrixes.get(activity)[0]++;
+            confusionMatrixes.put(activity, confusionMatrixes.get(activity));
+        } else {
+            int[] array =  new int[] {1,0,0,0};
+            confusionMatrixes.put(activity, array );
+        }
+    }
+   
+   
+    public void addFalsePositiveToConfusionMatrix(String activity) {
+        
+        if(confusionMatrixes.containsKey(activity) ) {
+            confusionMatrixes.get(activity)[1]++;
+            confusionMatrixes.put(activity, confusionMatrixes.get(activity));
+        } else {
+            int[] array =  new int[] {0,1,0,0};
+            confusionMatrixes.put(activity, array );
+        }
+    }
+
+    public void addFalseNegativeToConfusionMatrix(String activity) {
+    
+        if(confusionMatrixes.containsKey(activity) ) {
+            confusionMatrixes.get(activity)[2]++;
+            confusionMatrixes.put(activity, confusionMatrixes.get(activity));
+        } else {
+            int[] array =  new int[] {0,0,1,0};
+            confusionMatrixes.put(activity, array );
+        }
+    }
+
+    public void addTrueNegativeToConfusionMatrix(String activity) {
+    
+        if(confusionMatrixes.containsKey(activity) ) {
+            confusionMatrixes.get(activity)[3]++;
+            confusionMatrixes.put(activity, confusionMatrixes.get(activity));
+        } else {
+            int[] array =  new int[] {0,0,0,1};
+            confusionMatrixes.put(activity, array );
+        }
+    }
+    
+    public void createFinalConfusionMatrixes(String real, String predicted) {
+        
+        if(real.equals(predicted)) {
+            addFinalTruePositiveToConfusionMatrix(predicted);
+        } else if (real != predicted ) {
+            addFinalFalsePositiveToConfusionMatrix(predicted);
+            addFinalFalseNegativeToConfusionMatrix(real);
+        }
+        
+    }
+    
+    public void updateFinalTrueNegatives(int size) {
+        Iterator<Map.Entry <String, int[]> > it = finalConfusionMatrixes.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, int[]> pair = it.next();
+            int trueNegatives = pair.getValue()[0] + pair.getValue()[1] + pair.getValue()[2];
+            pair.getValue()[3] = size - trueNegatives;
+            pair.setValue(pair.getValue());
+        }
+        
+        
+    }
+    
+    public void addFinalTruePositiveToConfusionMatrix(String activity) {
+        
+        if(finalConfusionMatrixes.containsKey(activity) ) {
+            finalConfusionMatrixes.get(activity)[0]++;
+            finalConfusionMatrixes.put(activity, finalConfusionMatrixes.get(activity));
+        } else {
+            int[] array =  new int[] {1,0,0,0};
+            finalConfusionMatrixes.put(activity, array );
+        }
+    }
+    
+   
+    public void addFinalFalsePositiveToConfusionMatrix(String activity) {
+        
+        if(finalConfusionMatrixes.containsKey(activity) ) {
+            finalConfusionMatrixes.get(activity)[1]++;
+            finalConfusionMatrixes.put(activity, finalConfusionMatrixes.get(activity));
+        } else {
+            int[] array =  new int[] {0,1,0,0};
+            finalConfusionMatrixes.put(activity, array );
+        }
+    }
+
+    public void addFinalFalseNegativeToConfusionMatrix(String activity) {
+    
+        if(finalConfusionMatrixes.containsKey(activity) ) {
+            finalConfusionMatrixes.get(activity)[2]++;
+            finalConfusionMatrixes.put(activity, finalConfusionMatrixes.get(activity));
+        } else {
+            int[] array =  new int[] {0,0,1,0};
+            finalConfusionMatrixes.put(activity, array );
+        }
+    }
+
+    public void addFinalTrueNegativeToConfusionMatrix(String activity) {
+    
+        if(finalConfusionMatrixes.containsKey(activity) ) {
+            finalConfusionMatrixes.get(activity)[3]++;
+            finalConfusionMatrixes.put(activity, finalConfusionMatrixes.get(activity));
+        } else {
+            int[] array =  new int[] {0,0,0,1};
+            finalConfusionMatrixes.put(activity, array );
+        }
+    }
+    
 
     public int getNumtrain() {
         return numtrain;
@@ -726,6 +965,11 @@ public class EnsembleModel {
     
     public ArrayList<Integer> getclassifierID(){
     	return classifierID;
+    }
+    
+    
+    public Map<String, int[]> getConfusionMatrixes() {
+        return confusionMatrixes;
     }
 
 

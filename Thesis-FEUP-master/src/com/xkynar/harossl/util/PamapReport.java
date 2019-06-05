@@ -15,6 +15,7 @@ package com.xkynar.harossl.util;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -71,15 +72,26 @@ public class PamapReport {
             for (Prediction p : model.getPredictions()) {
                 System.out.println(p.toString(model.getDataHandler()));
                 
-                model.updateLeafNumberOfValues(model.getDataHandler().getClassification(p.getReal()));
+                //model.updateLeafNumberOfValues(model.getDataHandler().getClassification(p.getReal()));
                 
-                if(model.getDataHandler().getClassification(p.getReal())
+                model.createConfusionMatrixes( model.getDataHandler().getClassification(p.getReal()) , model.getDataHandler().getClassification(p.getPredictedEnsembled()) );
+                
+                /*if(model.getDataHandler().getClassification(p.getReal())
                         .equals(model.getDataHandler().getClassification(p.getPredictedEnsembled()))) {
                     model.updateLeafCorrectValue(model.getDataHandler().getClassification(p.getPredictedEnsembled()));
-                }
+                }*/
             }
             
+            model.updateTrueNegatives(model.getPredictions().size());
+            
 
+            System.out.println("Confusion Matrixes: ");
+            
+            Iterator<Map.Entry <String, int[]> > it = model.getConfusionMatrixes().entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<String, int[]> pair = it.next();
+                System.out.println(pair.getKey() + " - " + pair.getValue()[0] + " " + pair.getValue()[1] + " " + pair.getValue()[2] + " " + pair.getValue()[3]);
+            }
             
             System.out.println(model.getPredictions().get(542).getPredictedPerClassifier());
             System.out.println(model.getPredictions().size());

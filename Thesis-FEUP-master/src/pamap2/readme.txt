@@ -1,0 +1,1 @@
+copy the arff file from one of the directories to this one and name it pamap2.arff
