@@ -58,4 +58,8 @@ public class MyTreeNode<T>{
     public MyTreeNode getParent() {
         return parent;
     }
+    
+    public void deleteChildren() {
+        children.clear();
+    }
 }

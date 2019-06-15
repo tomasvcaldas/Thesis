@@ -1,9 +1,12 @@
 
-
+/*
 package com.xkynar.harossl.util;
 
 
 
+
+import java.util.ArrayList;
+import java.util.List;
 
 import dianaAlgorithm.MyTreeNode;
 import pt.up.fe.specs.contextwa.EnsembleModel;
@@ -12,7 +15,7 @@ import pt.up.fe.specs.contextwa.classifiers.ensemble.EnsembleClassifier;
 
 public final class PruningMethods {
     
-    private EnsembleModel model = new EnsembleModel();
+    //private EnsembleModel model = new EnsembleModel();
     
     public PruningMethods() {
         // TODO Auto-generated constructor stub
@@ -20,7 +23,7 @@ public final class PruningMethods {
     
     
     @SuppressWarnings("unchecked")
-    public MyTreeNode<String> getNodeToPrune(MyTreeNode<String> root) {
+    public void getNodeToPrune(MyTreeNode<String> root) {
         
         MyTreeNode<String> returnNode = null;
         
@@ -31,44 +34,48 @@ public final class PruningMethods {
         
         if(model.IsLeaf(rightNode) && !model.IsLeaf(leftNode) && model.IsLeaf(leftNode.getChildren().get(0)) && model.IsLeaf(leftNode.getChildren().get(1)) ||
                 model.IsLeaf(leftNode) && !model.IsLeaf(rightNode) && model.IsLeaf(rightNode.getChildren().get(1)) && model.IsLeaf(rightNode.getChildren().get(0))  ) {
-            return root;
+            pruneNode(root);
         } else
         
         if( !model.IsLeaf(rightNode)) {
-           returnNode = getNodeToPrune(rightNode);
+           getNodeToPrune(rightNode);
         } if(!model.IsLeaf(leftNode)) {
-            returnNode = getNodeToPrune(leftNode);
+            getNodeToPrune(leftNode);
         }
-        
-        return returnNode;
-        
+                
     }
 
 
-    public MyTreeNode<String> pruneNode(MyTreeNode<String> nodeToPrun) {
-        MyTreeNode<String> newNode = null;
-        
+    @SuppressWarnings({ "unchecked" })
+    public void pruneNode(MyTreeNode<String> nodeToPrun) {
+        List<MyTreeNode> newChildList = new ArrayList<>();
+         
         MyTreeNode<String> rightNode = nodeToPrun.getChildren().get(1);
-        
         MyTreeNode<String> leftNode = nodeToPrun.getChildren().get(0);
-        
+
         if(model.IsLeaf(rightNode)) {
-            newNode.addChild(rightNode);
+            newChildList.add(rightNode);
         } else {
-            newNode.addChild(rightNode.getChildren().get(0));
-            newNode.addChild(rightNode.getChildren().get(1));
+            newChildList.add(rightNode.getChildren().get(0));
+            newChildList.add(rightNode.getChildren().get(1));
         }
         
         if(model.IsLeaf(leftNode)) {
-            newNode.addChild(leftNode);
+            newChildList.add(leftNode);
         } else {
-            newNode.addChild(leftNode.getChildren().get(0));
-            newNode.addChild(leftNode.getChildren().get(1));
+            newChildList.add(leftNode.getChildren().get(0));
+            newChildList.add(leftNode.getChildren().get(1));
         }
+        nodeToPrun.deleteChildren();
         
-        return newNode;
+        nodeToPrun.addChildren(newChildList);
+        
+        //return newNode;
       
     }
+
+
+   
 
 
   
@@ -76,3 +83,4 @@ public final class PruningMethods {
 }
     
  
+*/

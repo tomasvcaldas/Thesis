@@ -54,9 +54,9 @@ public final class JGraph {
     
     public JGraph() {}
     
-    public void createGraph(MyTreeNode<String> Node) {
+    public void createGraph(MyTreeNode<String> Node, String fileName) {
         
-        File imgFile = new File("src/test/resources/graph.png");
+        File imgFile = new File("src/test/resources/" + fileName + ".png");
         try {
             imgFile.createNewFile();
         } catch (IOException e) {
@@ -90,29 +90,40 @@ public final class JGraph {
     
     private void addGraphVertexes(MyTreeNode<String> Node) {
         
-        g.addVertex(Node.getChildren().get(0).getData().toString());
-        g.addVertex(Node.getChildren().get(1).getData().toString());
+        for(int i = 0; i < Node.getChildren().size(); i++) {
+            g.addVertex(Node.getChildren().get(i).getData().toString());
+        }
+       
       
-        if(!IsLeaf(Node.getChildren().get(0))) {
+        for(int i = 0; i < Node.getChildren().size(); i++) {
+            if(!IsLeaf(Node.getChildren().get(i))) {
+                addGraphVertexes(Node.getChildren().get(i));
+            }
+        }
+        
+        /*if(!IsLeaf(Node.getChildren().get(0))) {
             addGraphVertexes(Node.getChildren().get(0));
         }
         if(!IsLeaf(Node.getChildren().get(1))) {
             addGraphVertexes(Node.getChildren().get(1));
-        }
+        }*/
          
     }
     
     private void addGraphEdges(MyTreeNode<String> Node) {
         
-        g.addEdge(Node.getData().toString(), Node.getChildren().get(0).getData().toString());
-        g.addEdge(Node.getData().toString(), Node.getChildren().get(1).getData().toString());
+        for(int i = 0; i < Node.getChildren().size(); i++) {
+            g.addEdge(Node.getData().toString(), Node.getChildren().get(i).getData().toString());
+        }
         
-        if(!IsLeaf(Node.getChildren().get(0))) {
-            addGraphEdges(Node.getChildren().get(0));
+     
+        for(int i = 0; i < Node.getChildren().size(); i++) {
+            if(!IsLeaf(Node.getChildren().get(i))) {
+                addGraphEdges(Node.getChildren().get(i));
+            }
         }
-        if(!IsLeaf(Node.getChildren().get(1))) {
-            addGraphEdges(Node.getChildren().get(1));
-        }
+        
+        
     }
     
     private boolean IsLeaf(MyTreeNode<String> IteratingNode) {

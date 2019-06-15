@@ -60,7 +60,10 @@ public class PamapMain extends PamapOptions {
 	private static boolean splinter = false;
 	
 	private static JGraph jgraph = new JGraph();
+	//private static PruningMethods pruningMethods = new PruningMethods();
 
+	
+	public PamapMain() {}
     public static void main(String[] args) throws IOException {
       
         processArguments(args);
@@ -183,8 +186,11 @@ public class PamapMain extends PamapOptions {
         Elem elem = new Elem(distHoeff,distNaive,act);
         root.setHoeff(elem);
         dianaiteration(root,elem);
-        jgraph.createGraph(root);
-        testTree(root);
+        jgraph.createGraph(root,"initialGraph");
+        testInitialTree(root);
+        model.pruningIteration(root);
+        
+       
         System.out.println("wait");	
         }
     
@@ -250,14 +256,22 @@ public class PamapMain extends PamapOptions {
 		return distHoeff;
 	}
 
-	private static void testTree(MyTreeNode<String> IterationNode) {
+	public void testTree(MyTreeNode<String> IterationNode) {
     	PamapDataHandler dataHandler2 =  null;
-    //	if(IterationNode.getData().equals("Root"))
-    	String[] temp = {IterationNode.getChildren().get(0).getData().toString(),IterationNode.getChildren().get(1).getData().toString()};
     	
+    	/*ArrayList<String> childList = new ArrayList<>();
+
+    	for(int i = 0; i < IterationNode.getChildren().size(); i++) {
+    	    childList.add(IterationNode.getChildren().get(i).getData().toString());
+    	}
+
+    	String[] temp= childList.toArray(new String[childList.size()]);*/
+    	
+    	 String[] temp = {IterationNode.getChildren().get(0).getData().toString(),IterationNode.getChildren().get(1).getData().toString()};
+
+
     	 dataHandler2 = new PamapDataHandler(temp);
     	
-    //	dataHandler2 = new PamapDataHandler(ActivityType.toStringArray());
     	
     	 dataHandler2.setActiveSensors(SENSORS[0], SENSORS[1], SENSORS[2]);
     	 EnsembleModel model = newEnsembledModel(6,dataHandler2);
@@ -266,33 +280,31 @@ public class PamapMain extends PamapOptions {
     	 model.testTree(root,SENSORS);
     	 
     	 int temp2 = model.numCorrect;
-    	 /*
-    	    List<Prediction> temp = model.getPredictions();
-    	
-    	    int[][] tempHoeff = new int[dataHandler2.getNumClasses()][dataHandler2.getNumClasses()];
-    	    int[][] tempNaive = new int[dataHandler2.getNumClasses()][dataHandler2.getNumClasses()];
-    	
-    	    for(int i = 0; i < model.getPredictions().size();i++) {
-    		    int real = model.getPredictions().get(i).getReal();
-    		
-    		    for(int k = 0; k < model.getclassifierID().size();k++) {
-    			    if(model.getclassifierID().get(k) == 1) {
-    			    tempNaive[real][model.getPredictions().get(i).getPredictedPerClassifier().get(k)] += 1;
-    			
-    			    }else if (model.getclassifierID().get(k) == 2)
-    			    tempHoeff[real][model.getPredictions().get(i).getPredictedPerClassifier().get(k)] += 1;
-    		    } 	
-    	    } 
-    	*/
+    	 
     	
 	}
 	
-	public static void testMultiTree(MyTreeNode<String> IterationNode) {
-	    
-	    
-	    return null;
-	}
 	
+	public static void testInitialTree(MyTreeNode<String> IterationNode) {
+        PamapDataHandler dataHandler2 =  null;
+
+        String[] temp = {IterationNode.getChildren().get(0).getData().toString(),IterationNode.getChildren().get(1).getData().toString()};
+        
+         dataHandler2 = new PamapDataHandler(temp);
+        
+        
+         dataHandler2.setActiveSensors(SENSORS[0], SENSORS[1], SENSORS[2]);
+         EnsembleModel model = newEnsembledModel(6,dataHandler2);
+         model.init();
+         model.train();
+         model.testTree(root,SENSORS);
+         
+         int temp2 = model.numCorrect;
+         
+        
+    }
+        
+		
 
 	private static String[] getElemInit(double[][] distHoeff) {
  	   String[] act = new String[distHoeff.length];

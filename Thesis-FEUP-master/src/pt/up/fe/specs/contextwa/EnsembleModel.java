@@ -16,6 +16,7 @@ package pt.up.fe.specs.contextwa;
 import static java.lang.Math.toIntExact;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -26,8 +27,8 @@ import javax.swing.text.AbstractDocument.LeafElement;
 import com.xkynar.harossl.classifier.HarosslMajorityClassifier;
 import com.xkynar.harossl.data.PamapDataFetcher;
 import com.xkynar.harossl.data.PamapDataHandler;
+import com.xkynar.harossl.util.JGraph;
 import com.xkynar.harossl.util.ProgressBarString;
-import com.xkynar.harossl.util.PruningMethods;
 import com.yahoo.labs.samoa.instances.Attribute;
 import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
@@ -38,6 +39,8 @@ import pt.up.fe.specs.contextwa.classifiers.ensemble.util.Prediction;
 import pt.up.fe.specs.contextwa.data.fetch.ConditionalDataFetcher;
 import pt.up.fe.specs.contextwa.data.fetch.DataFetcher;
 import pt.up.fe.specs.contextwa.data.handlers.DataHandler;
+import com.xkynar.harossl.PamapMain;
+
 
 /**
  * Framework connecting the classifier with data fetch and data handling for testing purposes. In this framework one
@@ -68,8 +71,9 @@ public class EnsembleModel {
     private List <List <Instance>> Instancias;
     
     public static int numCorrect = 0;
-    public int NumeroInstancias;
+    public int NumeroInstancias = 0;
     public int NumeroInstanciasNotEvaluated = 0;
+    public int iteration = 0;
     public ArrayList<Integer> accuracy = new ArrayList<Integer>();
     public ArrayList<Integer> NumberOfInstances = new ArrayList<Integer>();
     
@@ -79,11 +83,16 @@ public class EnsembleModel {
     public static Map<String, Integer> nodesGuessCount = new HashMap<String, Integer>();
     public static Map<String, Integer> nodesWrong = new HashMap<String, Integer>();
     
+    public static Map<String, List<InstanceModified>> ChildNodes = new HashMap<String, List<InstanceModified>>();
+    
     public static Map<String, int[]> confusionMatrixes = new HashMap<String, int[]>();
     
     public static Map<String, int[]> finalConfusionMatrixes = new HashMap<String, int[]>();
     
-    public PruningMethods pruningMethods = new PruningMethods();
+    private static JGraph jgraph = new JGraph();
+    private static PamapMain main = new PamapMain();
+    
+    //public PruningMethods pruningMethods = new PruningMethods();
     
     
     public EnsembleModel() {};
@@ -210,16 +219,29 @@ public class EnsembleModel {
 	            
 	        }
 	        
-	        NumeroInstancias = ChildNode1.size() + ChildNode2.size();
 	        
-	        if(!IsLeaf(root.getChildren().get(0)))
+	        for(List<InstanceModified> list : ChildNodes.values()) {
+	            NumeroInstancias = NumeroInstancias + list.size();
+	        }
+	       
+	        
+	        //NumeroInstancias = ChildNode1.size() + ChildNode2.size();
+	        
+	        for(int j = 0; j < root.getChildren().size(); j++) {
+	            if(!IsLeaf(root.getChildren().get(j))) {
+	                testTreeIteration(root.getChildren().get(j),ChildNodes.get(root.getChildren().get(j).getData().toString()),Sensors);
+	            }
+	            sumCorrectInstances(ChildNodes.get(root.getChildren().get(j).getData().toString()));
+	        }
+	        
+	        /*if(!IsLeaf(root.getChildren().get(0)))
 	        testTreeIteration(root.getChildren().get(0),ChildNode1,Sensors);
 	        else
 	        sumCorrectInstances(ChildNode1);
 	        if(!IsLeaf(root.getChildren().get(1)))
 	        testTreeIteration(root.getChildren().get(1),ChildNode2,Sensors);
 	        else
-	        sumCorrectInstances(ChildNode2);
+	        sumCorrectInstances(ChildNode2);*/
 	        
 	        updateFinalTrueNegatives(NumeroInstancias);
 	        
@@ -229,7 +251,7 @@ public class EnsembleModel {
 	        
 	        testDataFetcher.close();
 	        
-	        System.out.println("Confusion Matrixes Starting Accuracy: ");
+	        /*System.out.println("Confusion Matrixes Starting Accuracy: ");
             Iterator<Map.Entry <String, int[]> > it = confusionMatrixes.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry<String, int[]> pair = it.next();
@@ -243,42 +265,127 @@ public class EnsembleModel {
                 Map.Entry<String, int[]> pair = it2.next();
                 double accuracy = (double)( pair.getValue()[0] + pair.getValue()[3] ) / (pair.getValue()[0] + pair.getValue()[1] + pair.getValue()[2] + pair.getValue()[3]);
                 System.out.println(pair.getKey() +": " +  accuracy );
-            }
-            
-           /* System.out.println("Nodes count: ");
-            Iterator<Map.Entry <String, Integer> > it3 = nodesCount.entrySet().iterator();
-            while (it3.hasNext()) {
-                Map.Entry<String, Integer> pair = it3.next();
-                System.out.println(pair.getKey() +": " +  pair.getValue() );
-            }
-            
-            System.out.println("Nodes guess count: ");
-            Iterator<Map.Entry <String, Integer> > it4 = nodesGuessCount.entrySet().iterator();
-            while (it4.hasNext()) {
-                Map.Entry<String, Integer> pair = it4.next();
-                System.out.println(pair.getKey() +": " +  pair.getValue() );
             }*/
-             
-           MyTreeNode<String> nodeToPrun = pruningMethods.getNodeToPrune(root);
-           
-           MyTreeNode<String> prunnedNode = pruningMethods.pruneNode(nodeToPrun);
-           
- 
-         
-            
-            
-            
+	        
+	        System.out.println("Precision : ");
+            Iterator<Map.Entry <String, int[]> > it2 = finalConfusionMatrixes.entrySet().iterator();
+            while (it2.hasNext()) {
+                Map.Entry<String, int[]> pair = it2.next();
+                double precision = (double)( pair.getValue()[0] ) / (pair.getValue()[0] + pair.getValue()[1]);
+                System.out.println(pair.getKey() +": " +  precision );
+            }
             
 	         
 	        System.out.println("ACABOU");
-	        
-	        /*for (String key : leafNumberOfValues.keySet()) {
-	            System.out.println(key + ": total -> " + leafNumberOfValues.get(key) + " | real -> " + leafCorrectValues.getOrDefault(key, 0));
-	            //double correctInstancePercentage = leafCorrectValues.getOrDefault(key, 0) / leafNumberOfValues.get(key);
-	            //System.out.println(key + " : " + correctInstancePercentage );
-	        }*/
+
 		
 	}
+	
+	public boolean allNodesAreLeaf(MyTreeNode<String> node) {
+	    for(int i = 0; i < node.getChildren().size(); i++) {
+	        if(!IsLeaf(node.getChildren().get(i))) {
+	            return false;
+	        }
+	    }
+	    return true;
+	}
+	
+	
+	public boolean pruningIteration(MyTreeNode<String> node) {
+	        for(int i = 0; i < node.getChildren().size(); i++) { 
+	            if(!IsLeaf(node.getChildren().get(i))) {
+	                if(allNodesAreLeaf(node.getChildren().get(i))) {
+	                   if(allOtherNodesAreLeaf(node, i)) {
+	                       pruneNode(node);
+	                       return true;
+	                   }
+	                } else {
+	                    pruningIteration(node.getChildren().get(i));           
+	                }
+	             }
+	        }
+	        return pruningSecondIteration(node);
+	        
+	        
+	}
+	
+	public boolean pruningSecondIteration(MyTreeNode<String> node) {
+	    boolean canPrun = true;
+        for(int k = 0; k < node.getChildren().size(); k++) {
+            if(!IsLeaf(node.getChildren().get(k))) {
+                if(allNodesAreLeaf(node.getChildren().get(k))) {
+                   continue; 
+                } else {
+                    canPrun = false;
+                    pruningIteration(node);
+                }
+            }
+        } if(canPrun == true) {
+            pruneNode(node);
+            return true;
+        }
+        
+        return false;
+	}
+	
+	public boolean allOtherNodesAreLeaf(MyTreeNode<String> node, int nodeNonLeaf) {
+	    for(int i = 0; i < node.getChildren().size(); i++) {
+	        if( i != nodeNonLeaf ) {
+	            if(!IsLeaf(node.getChildren().get(i))) {
+	                return false;
+	            }
+	        }
+            
+        }
+        return true;
+	}
+
+    public void addAllChildrenToNodeList(List<MyTreeNode> newNode, MyTreeNode<String> currentNode)  {
+        for(int i = 0; i < currentNode.getChildren().size(); i++) {
+            newNode.add(currentNode.getChildren().get(i));
+        }
+    }
+
+
+    @SuppressWarnings({ "unchecked" })
+    public void pruneNode(MyTreeNode<String> nodeToPrun) {
+        List<MyTreeNode> newChildList = new ArrayList<>();
+        
+        for(int i = 0; i<nodeToPrun.getChildren().size(); i++) {
+            MyTreeNode<String> currentNode = nodeToPrun.getChildren().get(i);
+            
+            if(IsLeaf(currentNode)) {
+                newChildList.add(currentNode);
+            } else {
+                addAllChildrenToNodeList(newChildList, currentNode);
+            }
+            
+        }      
+        nodeToPrun.deleteChildren();
+        
+        nodeToPrun.addChildren(newChildList);
+        
+        if(nodeToPrun.getData().toString()  != "Root") {
+            while(nodeToPrun.getParent().getData().toString() != "Root") {
+                nodeToPrun = nodeToPrun.getParent();
+            }
+            nodeToPrun = nodeToPrun.getParent();
+        }
+        
+        
+        jgraph.createGraph(nodeToPrun,"iteration_" + iteration);
+        iteration++;
+        
+       if(!allNodesAreLeaf(nodeToPrun)) {
+           main.testTree(nodeToPrun);
+       }
+       
+       clearValues();
+     
+    }
+   private void clearValues() {
+       finalConfusionMatrixes.clear();
+   }    
 	
 	private void countInstances(String realClass, MyTreeNode<String> root) {
 		for(int i = 0;i < root.getHoeff().getActivityList().length;i++) {
@@ -332,8 +439,16 @@ public class EnsembleModel {
 	private void testTreeIteration(MyTreeNode<String> Node, List<InstanceModified> childNode12, boolean[] Sensors) {
 		
 		PamapDataHandler dataHandler2 = null;
-	    //	if(IterationNode.getData().equals("Root"))
-	    String[] temp = {Node.getChildren().get(0).getData().toString(),Node.getChildren().get(1).getData().toString()};
+	    
+		ArrayList<String> childList = new ArrayList<>();
+
+        for(int i = 0; i < Node.getChildren().size(); i++) {
+            childList.add(Node.getChildren().get(i).getData().toString());
+        }
+
+        String[] temp= childList.toArray(new String[childList.size()]);
+
+		
 	    	
 	    	dataHandler2 = new PamapDataHandler(temp);
 	    	dataHandler2.setActiveSensors(Sensors[0], Sensors[1], Sensors[2]);
@@ -350,6 +465,15 @@ public class EnsembleModel {
 	    	 model.train(model);
 	    	// model.train();
 	    	 model.test(childNode12, model, Path1, Path2);
+	    	 
+	    	 
+	    	 /*for(int j = 0; j < Node.getChildren().size(); j++) {
+	                if(!IsLeaf(Node.getChildren().get(j))) {
+	                    testTreeIteration(Node.getChildren().get(j),ChildNodes.get(Node.getChildren().get(j).getData().toString()),Sensors);
+	                }
+	                sumCorrectInstances(ChildNodes.get(Node.getChildren().get(j).getData().toString()));
+	            }*/
+	    	 
 	    	 
 	    	if(!IsLeaf(Node.getChildren().get(0)))
 	    		testTreeIteration(Node.getChildren().get(0), Path1, Sensors);
@@ -531,9 +655,10 @@ public class EnsembleModel {
         model.classifier.trainSupervised(instance);
 		
 	}
-
-	List<InstanceModified> ChildNode1 = new ArrayList<InstanceModified>();
-	List<InstanceModified> ChildNode2 = new ArrayList<InstanceModified>();
+	
+	//List<ArrayList<InstanceModified>> ChildNodes = new ArrayList<ArrayList<InstanceModified>>();
+	//List<InstanceModified> ChildNode1 = new ArrayList<InstanceModified>();
+	//List<InstanceModified> ChildNode2 = new ArrayList<InstanceModified>();
 	
     private void testTree(Instance instance,MyTreeNode<String> root, List<Instance> window, String RealClass) {
 		// TODO Auto-generated method stub
@@ -550,16 +675,27 @@ public class EnsembleModel {
     	//Onde passa um 
     	int classificationIndex = classifier.classifyTree(instance,root);
     	
-    	if(root.getChildren().get(0).getData().toString().contains(RealClass)) {
+    	/*if(root.getChildren().get(0).getData().toString().contains(RealClass)) {
     	    updateCorrectNodeCount(root.getChildren().get(0).getData().toString());
     	} else if (root.getChildren().get(1).getData().toString().contains(RealClass)) {
     	    updateCorrectNodeCount(root.getChildren().get(1).getData().toString());
     	} else {
     	    updateWrongNodes(root.getData().toString());
-    	}
+    	}*/
+    	
+    	InstanceModified temp = new InstanceModified(instance,RealClass);
+    	//ChildNodes.get(classificationIndex).add(temp);
     	
     	
-    	if(classificationIndex == 0) {
+    	if(ChildNodes.containsKey(root.getChildren().get(classificationIndex).getData().toString()) ) {
+            ChildNodes.get(root.getChildren().get(classificationIndex).getData().toString()).add(temp);
+        } else {
+            
+            ChildNodes.put(root.getChildren().get(classificationIndex).getData().toString(), new ArrayList<InstanceModified>() );
+            ChildNodes.get(root.getChildren().get(classificationIndex).getData().toString()).add(temp);
+        }
+    	
+    	/*if(classificationIndex == 0) {
     	    updateGuessedNodeCount(root.getChildren().get(0).getData().toString());
     		InstanceModified temp = new InstanceModified(instance,RealClass);
     		ChildNode1.add(temp);
@@ -568,7 +704,7 @@ public class EnsembleModel {
     	    updateGuessedNodeCount(root.getChildren().get(1).getData().toString());
     		InstanceModified temp = new InstanceModified(instance,RealClass);
     		ChildNode2.add(temp);
-    	}
+    	}*/
     	     	
     	
   
