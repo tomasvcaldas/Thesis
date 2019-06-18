@@ -100,13 +100,7 @@ public final class JGraph {
                 addGraphVertexes(Node.getChildren().get(i));
             }
         }
-        
-        /*if(!IsLeaf(Node.getChildren().get(0))) {
-            addGraphVertexes(Node.getChildren().get(0));
-        }
-        if(!IsLeaf(Node.getChildren().get(1))) {
-            addGraphVertexes(Node.getChildren().get(1));
-        }*/
+       
          
     }
     

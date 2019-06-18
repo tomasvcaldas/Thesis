@@ -84,6 +84,7 @@ public class EnsembleModel {
     public static Map<String, Integer> nodesWrong = new HashMap<String, Integer>();
     
     public static Map<String, List<InstanceModified>> ChildNodes = new HashMap<String, List<InstanceModified>>();
+    public static Map<String, List<InstanceModified>> PathsList = new HashMap<String, List<InstanceModified>>();
     
     public static Map<String, int[]> confusionMatrixes = new HashMap<String, int[]>();
     
@@ -224,24 +225,14 @@ public class EnsembleModel {
 	            NumeroInstancias = NumeroInstancias + list.size();
 	        }
 	       
-	        
-	        //NumeroInstancias = ChildNode1.size() + ChildNode2.size();
-	        
+	   
 	        for(int j = 0; j < root.getChildren().size(); j++) {
 	            if(!IsLeaf(root.getChildren().get(j))) {
 	                testTreeIteration(root.getChildren().get(j),ChildNodes.get(root.getChildren().get(j).getData().toString()),Sensors);
 	            }
 	            sumCorrectInstances(ChildNodes.get(root.getChildren().get(j).getData().toString()));
 	        }
-	        
-	        /*if(!IsLeaf(root.getChildren().get(0)))
-	        testTreeIteration(root.getChildren().get(0),ChildNode1,Sensors);
-	        else
-	        sumCorrectInstances(ChildNode1);
-	        if(!IsLeaf(root.getChildren().get(1)))
-	        testTreeIteration(root.getChildren().get(1),ChildNode2,Sensors);
-	        else
-	        sumCorrectInstances(ChildNode2);*/
+	       
 	        
 	        updateFinalTrueNegatives(NumeroInstancias);
 	        
@@ -376,15 +367,22 @@ public class EnsembleModel {
         jgraph.createGraph(nodeToPrun,"iteration_" + iteration);
         iteration++;
         
+        clearValues();
+        
        if(!allNodesAreLeaf(nodeToPrun)) {
+           boolean[] SENSORS = { true, true, true };
            main.testTree(nodeToPrun);
        }
        
-       clearValues();
+       
      
     }
    private void clearValues() {
        finalConfusionMatrixes.clear();
+       NumeroInstancias = 0;
+       ChildNodes.clear();
+       PathsList.clear();
+       
    }    
 	
 	private void countInstances(String realClass, MyTreeNode<String> root) {
@@ -444,7 +442,10 @@ public class EnsembleModel {
 
         for(int i = 0; i < Node.getChildren().size(); i++) {
             childList.add(Node.getChildren().get(i).getData().toString());
+            PathsList.put(Node.getChildren().get(i).getData().toString(), new ArrayList<InstanceModified>() ); 
         }
+        
+        
 
         String[] temp= childList.toArray(new String[childList.size()]);
 
@@ -458,55 +459,25 @@ public class EnsembleModel {
 	        DataFetcher testDataFetcher = this.testDataFetcher;
 	        EnsembleModel model = new EnsembleModel(classifier, dataHandler2, trainDataFetcher, testDataFetcher);
 	        
-	        List<InstanceModified> Path1 = new ArrayList<InstanceModified>();
-			List<InstanceModified> Path2 = new ArrayList<InstanceModified>();
 			
-	    	 model.init();
-	    	 model.train(model);
+	    	// model.init();
+	    	// model.train(model);
 	    	// model.train();
-	    	 model.test(childNode12, model, Path1, Path2);
+	    	 model.test(childNode12, model, PathsList, Node);
 	    	 
 	    	 
-	    	 /*for(int j = 0; j < Node.getChildren().size(); j++) {
-	                if(!IsLeaf(Node.getChildren().get(j))) {
-	                    testTreeIteration(Node.getChildren().get(j),ChildNodes.get(Node.getChildren().get(j).getData().toString()),Sensors);
-	                }
-	                sumCorrectInstances(ChildNodes.get(Node.getChildren().get(j).getData().toString()));
-	            }*/
-	    	 
-	    	 
-	    	if(!IsLeaf(Node.getChildren().get(0)))
-	    		testTreeIteration(Node.getChildren().get(0), Path1, Sensors);
-	    	else {
-	    	    sumCorrectInstances(Path1,model);
-	    	}
-	    		
-	    	
-	    	if(!IsLeaf(Node.getChildren().get(1)))
-	    		testTreeIteration(Node.getChildren().get(1), Path2, Sensors);
-	    	else {
-	    	    sumCorrectInstances(Path2,model);
-	    	}
-	    		
-	    		
-		
+	    	 for(int j = 0; j < Node.getChildren().size(); j++) {
+	    	     
+	    	     if(!IsLeaf(Node.getChildren().get(j)))
+	                 testTreeIteration(Node.getChildren().get(j), PathsList.get(Node.getChildren().get(j).getData().toString()), Sensors);
+	             else {
+	                 sumCorrectInstances(PathsList.get(Node.getChildren().get(j).getData().toString()),model);
+	             }
+
+	         }
+
 	}
-	
-	/*public void updateLeafCorrectValue(String instance) {
-	    if(leafCorrectValues.containsKey(instance) ) {
-	        leafCorrectValues.put(instance, leafCorrectValues.get(instance)+1);
-	    } else {
-	        leafCorrectValues.put(instance, 1);
-	    }
-	}
-	
-	public void updateLeafNumberOfValues(String instance) {
-	    if(leafNumberOfValues.containsKey(instance) ) {
-	        leafNumberOfValues.put(instance, leafNumberOfValues.get(instance)+1);
-        } else {
-            leafNumberOfValues.put(instance, 1);
-        }
-	}*/
+
 	
 	public void updateCorrectNodeCount(String node) {
 	    if(nodesCount.containsKey(node) ) {
@@ -532,12 +503,12 @@ public class EnsembleModel {
         }
     }
 
-	private void test(List<InstanceModified> childNode12, EnsembleModel model, List<InstanceModified> Path1, List<InstanceModified> Path2)
+	private void test(List<InstanceModified> childNode12, EnsembleModel model,  Map<String, List<InstanceModified>> PathsList, MyTreeNode<String> Node)
 	{
 		
 		for(int i = 0;i < childNode12.size(); i++)
 		{
-			test(childNode12.get(i),model, Path1, Path2);
+			test(childNode12.get(i),model, PathsList, Node);
 			
 		}
 		
@@ -545,29 +516,25 @@ public class EnsembleModel {
 		
 	}
 
-	private void test(InstanceModified instance, EnsembleModel model, List<InstanceModified> Path1, List<InstanceModified> Path2) {
+	private void test(InstanceModified instance, EnsembleModel model,  Map<String, List<InstanceModified>> PathsList, MyTreeNode<String> Node) {
 		 model.totalNumSamples++;
 	        int classificationIndex = model.classifier.classify(instance.getInstance());
-	        // matrix
-	        //int realClassValue = getClassValue(instance);
+	        
+	        if(classificationIndex > 1) {
+	            System.out.println("MAIOR QUE 1");
+	        }
+	        
+
 	        String givenClass = model.dataHandler.getClassification(classificationIndex); // classifier opinion
 	        String realClass = instance.getRealClass();
 	        
-	        /*if (model.dataHandler.getClassification(0).contains(realClass)) {
-	            updateCorrectNodeCount(model.dataHandler.getClassification(0));
-	        } else if (model.dataHandler.getClassification(1).contains(realClass)) {
-	            updateCorrectNodeCount(model.dataHandler.getClassification(1));
-	        } 
-	        
-	        if(classificationIndex == 0) {
-	            updateGuessedNodeCount(model.dataHandler.getClassification(0));
-	        } else if (classificationIndex == 1) {
-	            updateGuessedNodeCount(model.dataHandler.getClassification(1));
-	        }*/
+
 	        
 	        List<String> newClasses = new ArrayList<String>();
-	        newClasses.add(model.dataHandler.getClassification(0));
-	        newClasses.add(model.dataHandler.getClassification(1));
+	        
+	        for(int i = 0; i < Node.getChildren().size();i++) {
+	            newClasses.add(model.dataHandler.getClassification(i));
+	        }
 
 	        
 	        Attribute att = new Attribute("class", newClasses);
@@ -580,10 +547,9 @@ public class EnsembleModel {
 	        instance.getInstance().setValue(0, classificationIndex);
 	        InstanceModified newInstance = new InstanceModified(instance.getInstance(),instance.getRealClass());
 	        
-	        if(classificationIndex == 0)
-	        Path1.add(newInstance);
-	        else
-	        Path2.add(newInstance);
+	        
+	        PathsList.get(Node.getChildren().get(classificationIndex).getData().toString()).add(newInstance); 
+	       
 	        
 		
 	}
@@ -605,16 +571,6 @@ public class EnsembleModel {
 	}
 
 	private void train(EnsembleModel model) {
-		/*
-		for(int i = 0;i < instances.size(); i++)
-		{
-			trainSupervised(instances.get(i),model);
-                percentage = ProgressBarString.printBar(percentage, i,
-                        instances.size());
-            
-			
-		}
-		*/
 		 trainDataFetcher.restart();
 	        int percentage = 0;
 	        long totalNumberOfSamples = trainDataFetcher.getTotalNumberOfSamples();
@@ -655,10 +611,7 @@ public class EnsembleModel {
         model.classifier.trainSupervised(instance);
 		
 	}
-	
-	//List<ArrayList<InstanceModified>> ChildNodes = new ArrayList<ArrayList<InstanceModified>>();
-	//List<InstanceModified> ChildNode1 = new ArrayList<InstanceModified>();
-	//List<InstanceModified> ChildNode2 = new ArrayList<InstanceModified>();
+
 	
     private void testTree(Instance instance,MyTreeNode<String> root, List<Instance> window, String RealClass) {
 		// TODO Auto-generated method stub
@@ -675,13 +628,6 @@ public class EnsembleModel {
     	//Onde passa um 
     	int classificationIndex = classifier.classifyTree(instance,root);
     	
-    	/*if(root.getChildren().get(0).getData().toString().contains(RealClass)) {
-    	    updateCorrectNodeCount(root.getChildren().get(0).getData().toString());
-    	} else if (root.getChildren().get(1).getData().toString().contains(RealClass)) {
-    	    updateCorrectNodeCount(root.getChildren().get(1).getData().toString());
-    	} else {
-    	    updateWrongNodes(root.getData().toString());
-    	}*/
     	
     	InstanceModified temp = new InstanceModified(instance,RealClass);
     	//ChildNodes.get(classificationIndex).add(temp);
@@ -694,34 +640,7 @@ public class EnsembleModel {
             ChildNodes.put(root.getChildren().get(classificationIndex).getData().toString(), new ArrayList<InstanceModified>() );
             ChildNodes.get(root.getChildren().get(classificationIndex).getData().toString()).add(temp);
         }
-    	
-    	/*if(classificationIndex == 0) {
-    	    updateGuessedNodeCount(root.getChildren().get(0).getData().toString());
-    		InstanceModified temp = new InstanceModified(instance,RealClass);
-    		ChildNode1.add(temp);
-    	}  
-    	else {
-    	    updateGuessedNodeCount(root.getChildren().get(1).getData().toString());
-    		InstanceModified temp = new InstanceModified(instance,RealClass);
-    		ChildNode2.add(temp);
-    	}*/
-    	     	
-    	
-  
-    /*	
-    	while(!IsLeaf(IteratingNode)) {
-    	 double[][] votes = classifier.classifyTree(instance);
-    	 
-    	 MyTreeNode<String> Child1 = root.getChildren().get(0);
-    	 MyTreeNode<String> Child2 = root.getChildren().get(1);
-    	 
-    	// CompareBothVotes(Child1,Child2);
-    	 
-    	 
-    	}
-    	*/ 
-    	 
-		
+
 	}
     
     
@@ -743,6 +662,9 @@ public class EnsembleModel {
 	public void test(Instance instance) {
         totalNumSamples++;
         int classificationIndex = classifier.classify(instance);
+        /*if(classificationIndex > 1) {
+            System.out.println("MAIOR QUE 1");
+        }*/
         // matrix
         int classValue = getClassValue(instance);
         acc_class[0][classValue] += 1; // first line: total number of instances per class

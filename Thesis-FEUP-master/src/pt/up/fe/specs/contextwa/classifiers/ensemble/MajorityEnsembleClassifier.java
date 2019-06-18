@@ -72,7 +72,7 @@ public class MajorityEnsembleClassifier extends EnsembleClassifier {
         double[][] votesPerClassifier = getVotesPerClassifier(instance); // raw values
        
         int index = 0;
-        int ramo = 1;
+        /*int ramo = 1;
         String cenas = root.getChildren().get(0).getHoeff().getPickedClassifier();
         
         if(cenas != null)
@@ -90,6 +90,23 @@ public class MajorityEnsembleClassifier extends EnsembleClassifier {
         else if(root.getChildren().get(ramo).getHoeff().getPickedClassifier().equals("KNN"))
         {
         	index = 0;
+        }*/
+        
+        
+        for(int i = 0; i < root.getChildren().size(); i++) {
+            if(root.getChildren().get(i).getHoeff().getPickedClassifier() != null) {
+ 
+             if(root.getChildren().get(i).getHoeff().getPickedClassifier().equals("Hoeff"))
+                 index = getClassifiers().size() - 1;
+             else if(root.getChildren().get(i).getHoeff().getPickedClassifier().equals("Naive")){
+                 if(ensemble[0] == false)
+                     index = 0;
+                 else
+                     index = 1;
+                 } else if(root.getChildren().get(i).getHoeff().getPickedClassifier().equals("KNN")) {
+                     index = 0;
+                 }
+            }
         }
         
         double[] votesPerInstance = votesPerClassifier[index];

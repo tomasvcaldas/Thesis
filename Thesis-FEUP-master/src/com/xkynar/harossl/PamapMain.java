@@ -259,15 +259,15 @@ public class PamapMain extends PamapOptions {
 	public void testTree(MyTreeNode<String> IterationNode) {
     	PamapDataHandler dataHandler2 =  null;
     	
-    	/*ArrayList<String> childList = new ArrayList<>();
+    	ArrayList<String> childList = new ArrayList<>();
 
     	for(int i = 0; i < IterationNode.getChildren().size(); i++) {
     	    childList.add(IterationNode.getChildren().get(i).getData().toString());
     	}
 
-    	String[] temp= childList.toArray(new String[childList.size()]);*/
+    	String[] temp= childList.toArray(new String[childList.size()]);
     	
-    	 String[] temp = {IterationNode.getChildren().get(0).getData().toString(),IterationNode.getChildren().get(1).getData().toString()};
+    	 //String[] temp = {IterationNode.getChildren().get(0).getData().toString(),IterationNode.getChildren().get(1).getData().toString()};
 
 
     	 dataHandler2 = new PamapDataHandler(temp);
@@ -288,7 +288,14 @@ public class PamapMain extends PamapOptions {
 	public static void testInitialTree(MyTreeNode<String> IterationNode) {
         PamapDataHandler dataHandler2 =  null;
 
-        String[] temp = {IterationNode.getChildren().get(0).getData().toString(),IterationNode.getChildren().get(1).getData().toString()};
+        
+        ArrayList<String> childList = new ArrayList<>();
+
+        for(int i = 0; i < IterationNode.getChildren().size(); i++) {
+            childList.add(IterationNode.getChildren().get(i).getData().toString());
+        }
+
+        String[] temp= childList.toArray(new String[childList.size()]);
         
          dataHandler2 = new PamapDataHandler(temp);
         
