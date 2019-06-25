@@ -1,8 +1,9 @@
 package dianaAlgorithm;
 
+import java.io.Serializable;
 import java.util.Hashtable;
 
-public class Elem {
+public class Elem implements Serializable {
 	
 	double[][] distHoeff;
 	double[][] distNaive;

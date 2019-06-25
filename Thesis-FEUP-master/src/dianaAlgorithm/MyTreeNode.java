@@ -1,9 +1,10 @@
 package dianaAlgorithm;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MyTreeNode<T>{
+public class MyTreeNode<T> implements Serializable{
     private T data = null;
     private List<MyTreeNode> children = new ArrayList<>();
     private MyTreeNode parent = null;
@@ -13,6 +14,14 @@ public class MyTreeNode<T>{
         this.data = data;
     }
     
+
+
+
+    public MyTreeNode() {
+        
+    }
+
+
     public void setHoeff(Elem distHoeff) {
     	this.distHoeff=distHoeff;
     }

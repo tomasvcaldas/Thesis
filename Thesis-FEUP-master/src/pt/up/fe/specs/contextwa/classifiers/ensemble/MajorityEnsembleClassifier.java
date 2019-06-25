@@ -31,6 +31,41 @@ public class MajorityEnsembleClassifier extends EnsembleClassifier {
 
     // ensemble votes per instance
     @Override
+    public int classify(Instance instance, int numClasses) {
+        //int numClasses = instance.numClasses();// ActivityType.values().length;
+        int numClassifiers = getClassifiers().size();
+        double[][] votesPerClassifier = getVotesPerClassifier(instance, numClasses); // raw values
+        double[] votes = new double[numClasses];
+        for (int i = 0; i < numClassifiers; i++) {
+            double[] votesPerInstance = votesPerClassifier[i];
+            double votesSum = Utils.sum(votesPerInstance);
+            classifierInfo[i] = Utils.maxIndex(votesPerInstance);
+            // System.out.println(votes.length + " vs " + votesPerInstance.length);
+            for (int j = 0; j < numClasses; j++) {
+                votes[j] += (votesPerInstance[j] / votesSum);
+            }
+        }
+        for (int j = 0; j < numClasses; j++) {
+            votes[j] = votes[j] / numClassifiers * 100f;
+        }
+
+        int maxIndex = Utils.maxIndex(votes);
+        // int real = (int) instance.classValue();
+        // System.out.print(maxIndex + " vs " + real);
+
+        //if (votes[maxIndex] <= 40) {
+            // System.out.println(" = -1");
+            //return -1;
+        //}
+
+        this.votes = maxIndex;
+        // System.out.println(" = " + maxIndex);
+
+        return maxIndex;
+
+    }
+    
+    @Override
     public int classify(Instance instance) {
         int numClasses = instance.numClasses();// ActivityType.values().length;
         int numClassifiers = getClassifiers().size();

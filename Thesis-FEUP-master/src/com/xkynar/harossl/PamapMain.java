@@ -61,6 +61,9 @@ public class PamapMain extends PamapOptions {
 	
 	private static JGraph jgraph = new JGraph();
 	//private static PruningMethods pruningMethods = new PruningMethods();
+	
+	public ArrayList<Double> globalAccuracy = new ArrayList<Double>();
+    public int globalAccuracyIndex = 0;
 
 	
 	public PamapMain() {}
@@ -188,6 +191,7 @@ public class PamapMain extends PamapOptions {
         dianaiteration(root,elem);
         jgraph.createGraph(root,"initialGraph");
         testInitialTree(root);
+       
         model.pruningIteration(root);
         
        
@@ -256,7 +260,7 @@ public class PamapMain extends PamapOptions {
 		return distHoeff;
 	}
 
-	public void testTree(MyTreeNode<String> IterationNode) {
+	public void testTree(MyTreeNode<String> IterationNode, MyTreeNode<String> previousChildList) {
     	PamapDataHandler dataHandler2 =  null;
     	
     	ArrayList<String> childList = new ArrayList<>();
@@ -277,7 +281,7 @@ public class PamapMain extends PamapOptions {
     	 EnsembleModel model = newEnsembledModel(6,dataHandler2);
     	 model.init();
     	 model.train();
-    	 model.testTree(root,SENSORS);
+    	 model.testTree(root,SENSORS, previousChildList);
     	 
     	 int temp2 = model.numCorrect;
     	 
@@ -304,7 +308,7 @@ public class PamapMain extends PamapOptions {
          EnsembleModel model = newEnsembledModel(6,dataHandler2);
          model.init();
          model.train();
-         model.testTree(root,SENSORS);
+         model.testTree(root,SENSORS, null);
          
          int temp2 = model.numCorrect;
          
@@ -959,6 +963,20 @@ return maxValue;
         System.out.println(
                 "-== Person " + person + " time:  " + (System.currentTimeMillis() - currentTimeMillis) + "ms ==-");
     }
+    public ArrayList<Double> getGlobalAccuracy() {
+        return globalAccuracy;
+    }
+    public void setGlobalAccuracy(ArrayList<Double> globalAccuracy) {
+        this.globalAccuracy = globalAccuracy;
+    }
+    public int getGlobalAccuracyIndex() {
+        return globalAccuracyIndex;
+    }
+    public void setGlobalAccuracyIndex(int globalAccuracyIndex) {
+        this.globalAccuracyIndex = globalAccuracyIndex;
+    }
+    
+    
     
     
 

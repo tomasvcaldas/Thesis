@@ -22,6 +22,8 @@ public interface SSLClassifier {
 
     double[] getVotesForInstance(Instance instance);
 
+    int classify(Instance instance, int numClasses);
+    
     int classify(Instance instance);
 
     boolean correctlyClassifies(Instance instance);

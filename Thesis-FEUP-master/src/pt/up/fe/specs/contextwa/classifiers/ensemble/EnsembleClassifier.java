@@ -43,6 +43,29 @@ public abstract class EnsembleClassifier implements SSLClassifier {
      * @param instance
      * @return
      */
+    protected double[][] getVotesPerClassifier(Instance instance, int numClasses) {
+        // int numClasses = instance.numClasses();
+        int ensembleSize = this.getClassifiers().size();
+        double[][] votePerClassifier = new double[ensembleSize][];
+
+        for (int i = 0; i < ensembleSize; i++) {
+            Classifier cl = getClassifiers().get(i);
+            double[] clVotes = cl.getVotesForInstance(instance);
+            /* *System.out.println("[ENSEMBLE] SIZE: " + clVotes.length);/* */
+            clVotes = Arrays.copyOf(clVotes ,numClasses);
+            /* *System.out.println("[ENSEMBLE] NEWS: " + clVotes.length);/* */
+            votePerClassifier[i] = clVotes;
+        }
+        return votePerClassifier;
+    }
+    
+    
+    /**
+     * Votes in raw format
+     * 
+     * @param instance
+     * @return
+     */
     protected double[][] getVotesPerClassifier(Instance instance) {
         // int numClasses = instance.numClasses();
         int ensembleSize = this.getClassifiers().size();

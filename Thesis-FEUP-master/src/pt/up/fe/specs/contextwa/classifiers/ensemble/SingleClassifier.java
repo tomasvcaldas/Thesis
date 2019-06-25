@@ -145,6 +145,14 @@ public class SingleClassifier implements SSLClassifier {
         return 1;
     }
 
+    @Override
+    public int classify(Instance instance, int numClasses) {
+        
+        int x = 2;
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
 
 
 }
