@@ -54,9 +54,11 @@ public final class JGraph {
     
     public JGraph() {}
     
-    public void createGraph(MyTreeNode<String> Node, String fileName) {
+    public void createGraph(MyTreeNode<String> Node, String fileName, int user) {
         
-        File imgFile = new File("src/test/resources/" + fileName + ".png");
+        
+        new File("src/test/resources/user" + user).mkdirs();
+        File imgFile = new File("src/test/resources/user" + user + "/" + fileName + ".png");
         try {
             imgFile.createNewFile();
         } catch (IOException e) {

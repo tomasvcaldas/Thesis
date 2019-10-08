@@ -64,6 +64,7 @@ public class PamapMain extends PamapOptions {
 	
 	public ArrayList<Double> globalAccuracy = new ArrayList<Double>();
     public int globalAccuracyIndex = 0;
+    public int iteration = 0;
 
 	
 	public PamapMain() {}
@@ -189,10 +190,11 @@ public class PamapMain extends PamapOptions {
         Elem elem = new Elem(distHoeff,distNaive,act);
         root.setHoeff(elem);
         dianaiteration(root,elem);
-        jgraph.createGraph(root,"initialGraph");
+        jgraph.createGraph(root,"initialGraph", USERS_LIST.get(0));
         testInitialTree(root);
-       
+        
         model.pruningIteration(root);
+        //model.pruningIteration(root);
         
        
         System.out.println("wait");	
@@ -260,7 +262,7 @@ public class PamapMain extends PamapOptions {
 		return distHoeff;
 	}
 
-	public void testTree(MyTreeNode<String> IterationNode, MyTreeNode<String> previousChildList) {
+	public MyTreeNode<String> testTree(MyTreeNode<String> IterationNode, MyTreeNode<String> previousChildList) {
     	PamapDataHandler dataHandler2 =  null;
     	
     	ArrayList<String> childList = new ArrayList<>();
@@ -281,9 +283,9 @@ public class PamapMain extends PamapOptions {
     	 EnsembleModel model = newEnsembledModel(6,dataHandler2);
     	 model.init();
     	 model.train();
-    	 model.testTree(root,SENSORS, previousChildList);
+    	 return model.testTree(root,SENSORS, previousChildList);
     	 
-    	 int temp2 = model.numCorrect;
+    	 //int temp2 = model.numCorrect;
     	 
     	
 	}
@@ -975,6 +977,14 @@ return maxValue;
     public void setGlobalAccuracyIndex(int globalAccuracyIndex) {
         this.globalAccuracyIndex = globalAccuracyIndex;
     }
+    public int getIteration() {
+        return iteration;
+    }
+    public void setIteration(int iteration) {
+        this.iteration = iteration;
+    }
+    
+    
     
     
     

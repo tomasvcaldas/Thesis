@@ -28,7 +28,7 @@ public abstract class PamapOptions {
     protected static int kValue = 3;
     protected static int WINDOWSIZE = 400;
     protected static float OVERLAPFACTOR = 0.3f;
-    protected static List<Integer> USERS_LIST = new ArrayList<>();
+    public static List<Integer> USERS_LIST = new ArrayList<>();
     protected static boolean[] ENSEMBLE = { false, true, true };
     protected static boolean[] SENSORS = { true, true, true };
     protected File outputDIR = new File(RESULTS_DIR);
@@ -108,5 +108,8 @@ public abstract class PamapOptions {
             }
         }
     }
+    
+
+    
 
 }

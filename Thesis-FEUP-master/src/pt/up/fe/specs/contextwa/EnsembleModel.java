@@ -47,7 +47,9 @@ import pt.up.fe.specs.contextwa.classifiers.ensemble.util.Prediction;
 import pt.up.fe.specs.contextwa.data.fetch.ConditionalDataFetcher;
 import pt.up.fe.specs.contextwa.data.fetch.DataFetcher;
 import pt.up.fe.specs.contextwa.data.handlers.DataHandler;
+import com.xkynar.harossl.util.PamapOptions;
 
+import com.github.javacliparser.StringUtils;
 import com.xkynar.harossl.PamapMain;
 
 
@@ -82,7 +84,6 @@ public class EnsembleModel {
     public static int numCorrect = 0;
     public int NumeroInstancias = 0;
     public int NumeroInstanciasNotEvaluated = 0;
-    public int iteration = 0;
     public ArrayList<Integer> accuracy = new ArrayList<Integer>();
     public ArrayList<Integer> NumberOfInstances = new ArrayList<Integer>();
     
@@ -105,6 +106,10 @@ public class EnsembleModel {
     
     private static JGraph jgraph = new JGraph();
     private static PamapMain main = new PamapMain();
+    public boolean acceptedPrun = false;
+    
+    
+    
     
     //public PruningMethods pruningMethods = new PruningMethods();
     
@@ -213,7 +218,7 @@ public class EnsembleModel {
      * @param ensemble 
      */
     
-	public void testTree(MyTreeNode<String> root, boolean[] Sensors, MyTreeNode<String> previousChildList) {
+	public MyTreeNode<String> testTree(MyTreeNode<String> root, boolean[] Sensors, MyTreeNode<String> previousChildList) {
 		 testDataFetcher.restart();
 	        int percentage = 0;
 	        long totalNumberOfSamples = testDataFetcher.getTotalNumberOfSamples();
@@ -289,14 +294,19 @@ public class EnsembleModel {
                 if(main.getGlobalAccuracy().get(main.getGlobalAccuracyIndex()) < main.getGlobalAccuracy().get(main.getGlobalAccuracy().size() - 1) ) {
                     main.setGlobalAccuracyIndex(main.getGlobalAccuracy().size() - 1);
                     System.out.println("New Accuracy was better");
+                    PamapOptions.USERS_LIST.get(0);
+                    jgraph.createGraph(root,"accepted_iteration_" + main.getIteration(), PamapOptions.USERS_LIST.get(0));
+                    main.setIteration(main.getIteration() + 1);
+                    return root;
                 } else {
                     System.out.println("Pruning was denied");
-                    pruningIteration(previousChildList);
-                }
-
-                
-            }
-	         
+                    
+                    jgraph.createGraph(root,"denied_iteration_" + main.getIteration(), PamapOptions.USERS_LIST.get(0));
+                    main.setIteration(main.getIteration() + 1);
+                    return previousChildList;
+                    
+                }   
+            } return root;
 		
 	}
 	
@@ -309,48 +319,71 @@ public class EnsembleModel {
 	    return true;
 	}
 	
-	public void startPruning(MyTreeNode<String> node)  {
-	    
-	}
+	public boolean pruneDenied = false;
+	/*public MyTreeNode<String> workingTree = new MyTreeNode<String>();
 	
 	
-	public boolean pruningIteration(MyTreeNode<String> node) {
-	        for(int i = 0; i < node.getChildren().size(); i++) { 
-	            if(!IsLeaf(node.getChildren().get(i))) {
-	                if(allNodesAreLeaf(node.getChildren().get(i))) {
-	                   if(allOtherNodesAreLeaf(node, i)) {
-	                       
-	                       pruneNode(node);
-	                       return true;
-	                   }
-	                } else {
-	                    pruningIteration(node.getChildren().get(i));           
+	public MyTreeNode<String> getWorkingTree() {
+        return workingTree;
+    }
+    public void setWorkingTree(MyTreeNode<String> workingTree) {
+        this.workingTree = workingTree;
+    }*/
+    
+	
+	public void pruningIteration(MyTreeNode<String> workingTree) {
+	    if(workingTree == null) {
+	        return;
+	    }
+	        for(int i = 0; i < workingTree.getChildren().size(); i++) { 
+	            if(workingTree.getPruned() == false) {
+	                if(!IsLeaf(workingTree.getChildren().get(i))) {
+	                    if(allNodesAreLeaf(workingTree.getChildren().get(i))) {
+	                        if(allOtherNodesAreLeaf(workingTree, i)) {
+	                            setAllSonsPruned(workingTree);
+	                            System.out.println("1st Pruning poss found");
+	                            MyTreeNode<String> x = pruneNode(workingTree);
+	                            
+	                            pruningIteration(x);
+	                        }
+	                    } else {
+	                        pruningIteration(workingTree.getChildren().get(i));  
+	                    }
 	                }
-	             }
+	            }
 	        }
-	        return pruningSecondIteration(node);
-	        
-	        
+	   if(pruningSecondIteration(workingTree) == false) {
+	       return;
+	   }
 	}
 	
-	public boolean pruningSecondIteration(MyTreeNode<String> node) {
+	public void setAllSonsPruned(MyTreeNode<String> node) {
+	    node.setPruned(true);
+	    for(int i = 0; i < node.getChildren().size() ; i++) {
+	        node.getChildren().get(i).setPruned(true);;
+	    }
+	}
+	
+	public boolean pruningSecondIteration(MyTreeNode<String> workingTree) {
 	    boolean canPrun = true;
-        for(int k = 0; k < node.getChildren().size(); k++) {
-            if(!IsLeaf(node.getChildren().get(k))) {
-                if(allNodesAreLeaf(node.getChildren().get(k))) {
+        for(int k = 0; k < workingTree.getChildren().size(); k++) {
+            if(!IsLeaf(workingTree.getChildren().get(k))) {
+                if(allNodesAreLeaf(workingTree.getChildren().get(k))) {
                    continue; 
                 } else {
                     canPrun = false;
-                    pruningIteration(node);
                 }
             }
-        } if(canPrun == true) {
-            pruneNode(node);
-            return true;
+        } if(canPrun == true && workingTree.getPruned() == false) {
+            setAllSonsPruned(workingTree);
+            System.out.println("2nd Pruning poss found");
+            MyTreeNode<String> x  = pruneNode(workingTree);
+            pruningIteration(x);
         }
         
         return false;
 	}
+	
 	
 	public boolean allOtherNodesAreLeaf(MyTreeNode<String> node, int nodeNonLeaf) {
 	    for(int i = 0; i < node.getChildren().size(); i++) {
@@ -388,12 +421,11 @@ public class EnsembleModel {
 
 
     @SuppressWarnings({ "unchecked" })
-    public void pruneNode(MyTreeNode<String> nodeToPrun) {
+    public MyTreeNode<String> pruneNode(MyTreeNode<String> nodeToPrun) {
         
           MyTreeNode<String> previousSubTree = (MyTreeNode<String>) deepClone(nodeToPrun);
 
-          
-         
+
          List<MyTreeNode> newChildList = new ArrayList<>();
         
         for(int i = 0; i<nodeToPrun.getChildren().size(); i++) {
@@ -412,28 +444,27 @@ public class EnsembleModel {
         
         nodeToPrun.addChildren(newChildList);
         
-        if(nodeToPrun.getData().toString()  != "Root") {
-            while(nodeToPrun.getParent().getData().toString() != "Root") {
+        if( nodeToPrun.getParent() != null) {
+            while(nodeToPrun.getParent() != null) {
                 previousSubTree = previousSubTree.getParent();
                 nodeToPrun = nodeToPrun.getParent();
             }
-            nodeToPrun = nodeToPrun.getParent();
-            previousSubTree = previousSubTree.getParent();
+            //nodeToPrun = nodeToPrun.getParent();
+            //previousSubTree = previousSubTree.getParent();
             
         }
         
+        System.out.println("Finished Iteration: " + main.getIteration());
         
-        jgraph.createGraph(nodeToPrun,"iteration_" + iteration);
-        iteration++;
         
         clearValues();
         
        if(!allNodesAreLeaf(nodeToPrun)) {
           
-           main.testTree(nodeToPrun, previousSubTree);
-       }
+           return main.testTree(nodeToPrun, previousSubTree);
+       }  
        
-       
+       return null;
      
     }
    private void clearValues() {

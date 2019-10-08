@@ -9,6 +9,8 @@ public class MyTreeNode<T> implements Serializable{
     private List<MyTreeNode> children = new ArrayList<>();
     private MyTreeNode parent = null;
     private Elem distHoeff;
+    private boolean pruned = false;
+    
 
     public MyTreeNode(T data) {
         this.data = data;
@@ -71,4 +73,16 @@ public class MyTreeNode<T> implements Serializable{
     public void deleteChildren() {
         children.clear();
     }
+    
+    public boolean getPruned() {
+        return pruned;
+    }
+    
+    public void setPruned(boolean pruned) {
+        this.pruned = pruned;
+    }
+    
+    
+    
+    
 }
